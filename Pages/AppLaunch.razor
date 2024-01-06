@@ -1,0 +1,80 @@
+﻿@page "/";
+@using MauiBlazorApp.Interfaces;
+@using MauiBlazorApp.Models;
+@using MauiBlazorApp.Services;
+@using Newtonsoft.Json;
+@using System.IdentityModel.Tokens.Jwt;
+@inject NavigationManager NavManager;
+@inject IAppService AppService;
+
+<h3>AppLaunch</h3>
+
+Loading...
+
+@code {
+    protected async override Task OnInitializedAsync()
+    {
+        try
+        {
+            string userDetailsStr = await SecureStorage.GetAsync(nameof(Setting.UserBasicDetail));
+
+            if (!string.IsNullOrWhiteSpace(userDetailsStr))
+            {
+                var userBasicDetail = JsonConvert.DeserializeObject<UserBasicDetail>(userDetailsStr);
+
+                var handler = new JwtSecurityTokenHandler();
+                var jsontoken = handler.ReadToken(userBasicDetail.AccessToken) as JwtSecurityToken;
+
+                if (jsontoken.ValidTo < DateTime.UtcNow)
+                {
+                    var refreshTokenResponse = await AppService.RefreshToken(new AuthenticationResponse
+                        {
+                            AccessToken = userBasicDetail.AccessToken,
+                            RefreshToken = userBasicDetail.RefreshToken
+                        });
+
+                    if (refreshTokenResponse.IsSuccess)
+                    {
+                        //System.Diagnostics.Debug.WriteLine($"RefreshToken Response Content: {refreshTokenResponse.Content}");
+
+                        // Only deserialize AccessToken and RefreshToken from the JSON response
+                        AuthenticationResponse authenticationResponse = refreshTokenResponse.Content;
+                        userBasicDetail.AccessToken = authenticationResponse.AccessToken;
+                        userBasicDetail.RefreshToken = authenticationResponse.RefreshToken;
+
+                        userDetailsStr = JsonConvert.SerializeObject(userBasicDetail);
+                        await SecureStorage.SetAsync(nameof(Setting.UserBasicDetail), userDetailsStr);
+                        Setting.UserBasicDetail = userBasicDetail;
+                        NavManager.NavigateTo("/dashboard");
+                    }
+                    else
+                    {
+                        // Log the error details
+                        await App.Current.MainPage.DisplayAlert("Success", refreshTokenResponse.ErrorMessage, "OK");
+                        // Console.WriteLine($"Error in RefreshToken: {refreshTokenResponse.ErrorMessage}");
+
+                        // Navigate to the login page or handle the error as needed
+                        NavManager.NavigateTo("/login");
+                    }
+                }
+                else
+                {
+                    NavManager.NavigateTo("/dashboard");
+                }
+            }
+            else
+            {
+                NavManager.NavigateTo("/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the exception details
+            Console.WriteLine($"Exception in OnInitializedAsync: {ex}");
+
+            // Handle the exception or rethrow as needed
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+}
