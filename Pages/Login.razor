@@ -71,6 +71,7 @@ else
             string userID = jsontoken.Claims.FirstOrDefault(f => f.Type == JwtRegisteredClaimNames.NameId).Value;
             string name = jsontoken.Claims.FirstOrDefault(f => f.Type == JwtRegisteredClaimNames.UniqueName).Value;
             string email = loginModel.UserName;
+            string userAvatar = jsontoken.Claims.FirstOrDefault(f => f.Type == "UserAvatar").Value;
 
             var userBasicDetail = new UserBasicDetail
                 {
@@ -78,6 +79,7 @@ else
                     Name = name,
                     AccessToken = response.Content.AccessToken,
                     RefreshToken = response.Content.RefreshToken,
+                    UserAvatar = !string.IsNullOrWhiteSpace(userAvatar) ? $"{Setting.BaseUrl}/{userAvatar}" : "",
                     UserID = userID
                 };
 

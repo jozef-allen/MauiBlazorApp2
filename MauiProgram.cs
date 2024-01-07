@@ -25,13 +25,13 @@ namespace MauiBlazorApp
             builder.Services.AddTransient<IAppService, AppService>();
             builder.Services.AddHttpClient<IMyApiService, MyApiService>(client =>
             {
-                //client.BaseAddress = new Uri("http://10.0.2.2:5157/");
-                client.BaseAddress = new Uri("https://localhost:7267/");
+                client.BaseAddress = new Uri("http://10.0.2.2:5157/");
+                //client.BaseAddress = new Uri("https://localhost:7267/");
             });
             builder.Services.AddHttpClient<IAppService, AppService>(client =>
             {
-                client.BaseAddress = new Uri("http://10.0.2.2:5157/");
-                //client.BaseAddress = new Uri("https://localhost:7267/");
+                //client.BaseAddress = new Uri("http://10.0.2.2:5157/");
+                client.BaseAddress = new Uri("https://localhost:7267/");
             })
         .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
